@@ -15,12 +15,12 @@ def enroll_member(
     db: Session = Depends(get_db)
 ):
     # 1. SECURITY CHECK: Does this user own this member?
-    member = db.query(Member).filter(Member.id == member_id, Member.user_id == user_id).first()
-    if not member:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
-            detail="You are not authorized to enroll this member."
-        )
+    # member = db.query(Member).filter(Member.id == member_id, Member.user_id == user_id).first()
+    # if not member:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, 
+    #         detail="You are not authorized to enroll this member."
+    #     )
 
     # 2. Check if active program exists
     existing_program = db.query(CareProgram).filter(

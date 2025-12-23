@@ -7,7 +7,7 @@ class MemberBase(BaseModel):
     name: str
     age: int
     gender: Optional[str] = None
-    relationship: str
+    relation_type: str
 
 class MemberCreate(MemberBase):
     user_id: int
