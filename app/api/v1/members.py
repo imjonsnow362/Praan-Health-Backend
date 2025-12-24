@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.user import Member, User
-from app.schemas.common import MemberCreate, MemberResponse
+from app.schemas.common import MemberCreate, MemberResponse, UserResponse
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -50,3 +50,19 @@ def create_member(member: MemberCreate, db: Session = Depends(get_db)):
 def list_members(user_id: int, db: Session = Depends(get_db)):
     """List all family members for a specific User"""
     return db.query(Member).filter(Member.user_id == user_id).all()
+
+
+
+@router.get("/{user_id}", response_model=list[MemberResponse])
+def list_members(user_id: int, db: Session = Depends(get_db)):
+    return db.query(Member).filter(Member.user_id == user_id).all()
+
+# --- NEW: Get All Users & Families (For Admin View) ---
+@router.get("/users/all", response_model=list[UserResponse])
+def get_all_users_with_families(db: Session = Depends(get_db)):
+    """
+    Fetches every user and nests their family members in the response.
+    """
+    # SQLAlchemy automatically handles the join via the 'members' relationship
+    users = db.query(User).all() 
+    return users    

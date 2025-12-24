@@ -17,6 +17,18 @@ class MemberResponse(MemberBase):
     class Config:
         from_attributes = True
 
+class UserBase(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+
+class UserResponse(UserBase):
+    id: int
+    # This magic line nests the members inside the user
+    members: List[MemberResponse] = [] 
+    
+    class Config:
+        from_attributes = True        
+
 
 class ProgramConfigCreate(BaseModel):
     nutrition_goals: Dict[str, Any] # e.g. {"calories": 1500, "protein_g": 80}
