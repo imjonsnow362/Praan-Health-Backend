@@ -11,12 +11,18 @@ class CareProgram(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     member_id = Column(Integer, ForeignKey("members.id"))
+    
+    # Metadata
     title = Column(String, default="90-Day Wellness Journey")
+    description = Column(String, nullable=True)  # <--- THIS WAS MISSING
+    
+    # Timeline
     start_date = Column(DateTime, default=datetime.datetime.utcnow)
     end_date = Column(DateTime)
     status = Column(String, default="ACTIVE")
     phase = Column(Integer, default=1)
     
+    # Relations
     member = relationship("Member", back_populates="programs")
     config = relationship("ProgramConfig", uselist=False, back_populates="program")
     logs = relationship("DailyLog", back_populates="program")
@@ -31,7 +37,7 @@ class ProgramConfig(Base):
     id = Column(Integer, primary_key=True, index=True)
     program_id = Column(Integer, ForeignKey("care_programs.id"))
     
-    # --- THESE WERE MISSING ---
+    # Goals
     nutrition_goals = Column(JSON, default={})
     strength_goals = Column(JSON, default={})
     clinical_goals = Column(JSON, default={})
