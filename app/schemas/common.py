@@ -16,3 +16,9 @@ class MemberResponse(MemberBase):
     id: int
     class Config:
         from_attributes = True
+
+
+class ProgramConfigCreate(BaseModel):
+    nutrition_goals: Dict[str, Any] # e.g. {"calories": 1500, "protein_g": 80}
+    strength_goals: Dict[str, Any]  # e.g. {"sessions_per_week": 4}
+    clinical_goals: Dict[str, Any]  # e.g. {"bp_check": "daily"}        

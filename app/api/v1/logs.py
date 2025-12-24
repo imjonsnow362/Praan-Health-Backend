@@ -95,3 +95,12 @@ def get_adherence(program_id: int, db: Session = Depends(get_db)):
         AdherenceMetric.date == today
     ).first()
     return metric
+
+
+@router.get("/{program_id}/history")
+def get_log_history(program_id: int, db: Session = Depends(get_db)):
+    """
+    Fetch all logs (Meals, Workouts) for a specific program.
+    """
+    logs = db.query(DailyLog).filter(DailyLog.program_id == program_id).order_by(DailyLog.timestamp.desc()).all()
+    return logs
