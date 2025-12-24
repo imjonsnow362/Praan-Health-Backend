@@ -4,6 +4,7 @@ from app.db.session import get_db
 from app.models.user import Member, User
 from app.schemas.common import MemberCreate, MemberResponse, UserResponse
 from pydantic import BaseModel
+from app.api.deps import get_current_user
 
 router = APIRouter()
 
@@ -20,9 +21,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     Registers a new Account Holder (User).
     This enables POST /api/v1/members/register
     """
-    # Check if email exists
-    existing_user = db.query(User).filter(User.email == user.email).first()
-    if existing_user:
+    if db.query(User).filter(User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
     new_user = User(
@@ -38,8 +37,12 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 # --- 3. Member Management Endpoints ---
 
 @router.post("/", response_model=MemberResponse)
-def create_member(member: MemberCreate, db: Session = Depends(get_db)):
-    """Create a family member (e.g., Mom) under a User account"""
+def create_member(member: MemberCreate, user_id: int = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Validation: Ensure User ID in body matches Auth Header
+    print(f"Debug: member.user_id = {member.user_id}, user_id = {user_id}")
+    if member.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Cannot create member for another user")
+
     db_member = Member(**member.model_dump())
     db.add(db_member)
     db.commit()
@@ -47,7 +50,7 @@ def create_member(member: MemberCreate, db: Session = Depends(get_db)):
     return db_member
 
 @router.get("/{user_id}", response_model=list[MemberResponse])
-def list_members(user_id: int, db: Session = Depends(get_db)):
+def list_members(user_id: int = Depends(get_current_user), db: Session = Depends(get_db)):
     """List all family members for a specific User"""
     return db.query(Member).filter(Member.user_id == user_id).all()
 

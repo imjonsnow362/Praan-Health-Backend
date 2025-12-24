@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from app.db.session import get_db
+from app.api.deps import get_current_user
 from app.models.program import CareProgram, ProgramConfig
 from app.schemas.common import EnrollmentRequest
 from app.models.user import Member
@@ -12,8 +13,8 @@ router = APIRouter()
 @router.post("/{member_id}/enroll")
 def enroll_member(
     member_id: int, 
-    user_id: int,
     request: EnrollmentRequest, 
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -31,6 +32,10 @@ def enroll_member(
     # member = db.query(Member).filter(Member.id == member_id, Member.user_id == user_id).first()
     # if not member:
     #     raise HTTPException(status_code=403, detail="Not authorized to enroll this member")
+
+    member = db.query(Member).filter(Member.id == member_id, Member.user_id == user_id).first()
+    if not member:
+        raise HTTPException(status_code=403, detail="Not authorized to enroll this member")
 
     # We check if they are already in an active program to prevent double-enrollment.
     existing = db.query(CareProgram).filter(
