@@ -15,7 +15,7 @@ class EnrollmentRequest(BaseModel):
     nutrition_goals: Dict[str, Any] # e.g. {"calories": 1500, "protein_g": 90}
     strength_goals: Dict[str, Any]  # e.g. {"sessions_per_week": 4}
     clinical_goals: Dict[str, Any]  # e.g. {"check_in": "daily"}
-    
+
 # Base for all responses
 class MemberBase(BaseModel):
     name: str
@@ -48,3 +48,19 @@ class ProgramConfigCreate(BaseModel):
     nutrition_goals: Dict[str, Any] # e.g. {"calories": 1500, "protein_g": 80}
     strength_goals: Dict[str, Any]  # e.g. {"sessions_per_week": 4}
     clinical_goals: Dict[str, Any]  # e.g. {"bp_check": "daily"}        
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    # In a real app, password updates require specific endpoints/hashing
+
+class MemberUpdate(BaseModel):
+    name: Optional[str] = None
+    age: Optional[int] = None
+    relation_type: Optional[str] = None
+
+class ProgramUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None # e.g., "PAUSED", "COMPLETED"
+    phase: Optional[int] = None    

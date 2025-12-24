@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.db.session import get_db
 from app.api.deps import get_current_user
 from app.models.program import CareProgram, ProgramConfig
-from app.schemas.common import EnrollmentRequest
+from app.schemas.common import EnrollmentRequest, ProgramUpdate
 from app.models.user import Member
 from app.schemas.common import ProgramConfigCreate
 from datetime import datetime, timedelta
@@ -160,3 +160,70 @@ def get_program_details(program_id: int, db: Session = Depends(get_db)):
             "clinical": getattr(program.config, 'clinical_goals', {})
         }
     }
+
+
+
+# --- READ (List by Member) ---
+@router.get("/list/{member_id}")
+def list_member_programs(
+    member_id: int,
+    user_id: int = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List all programs (Active & History) for a specific member"""
+    # Security check
+    member = db.query(Member).filter(Member.id == member_id, Member.user_id == user_id).first()
+    if not member:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    programs = db.query(CareProgram).filter(CareProgram.member_id == member_id).all()
+    return programs
+
+# --- UPDATE ---
+@router.put("/{program_id}")
+def update_program(
+    program_id: int,
+    update_data: ProgramUpdate,
+    user_id: int = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update status (e.g., PAUSED) or metadata"""
+    # 1. Fetch Program + Member to verify ownership
+    program = db.query(CareProgram).join(Member).filter(
+        CareProgram.id == program_id,
+        Member.user_id == user_id # Ensures user owns this program
+    ).first()
+
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found or access denied")
+
+    if update_data.status: program.status = update_data.status
+    if update_data.title: program.title = update_data.title
+    if update_data.description: program.description = update_data.description
+    if update_data.phase: program.phase = update_data.phase
+
+    db.commit()
+    db.refresh(program)
+    return program
+
+# --- DELETE ---
+@router.delete("/{program_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_program(
+    program_id: int,
+    user_id: int = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a program (and cascade delete configs/logs)"""
+    program = db.query(CareProgram).join(Member).filter(
+        CareProgram.id == program_id,
+        Member.user_id == user_id
+    ).first()
+
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found or access denied")
+
+    # Note: If database Cascade Delete is set up, this deletes Configs/Logs automatically.
+    # Otherwise, you might need to delete Config/Logs manually here first.
+    db.delete(program)
+    db.commit()
+    return None
